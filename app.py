@@ -2,7 +2,8 @@ import streamlit as st
 import os
 import numpy as np
 from PIL import Image
-import cv2
+
+import tensorflow as tf
 
 from tensorflow.keras.models import load_model
 from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
@@ -56,9 +57,15 @@ if uploaded_file is not None:
     # 이미지 준비
     image = Image.open(uploaded_file) # <PIL.JpegImagePlugin.JpegImageFile image mode=RGB size=1500x1500 at 0x198B95F8250>
     image_np = np.array(image)
-    # resize에는 ndarray를 전달해야 한다.
-    a_image = cv2.resize(image_np, (IMAGE_SIZE, IMAGE_SIZE))
-    a_image = preprocess_input(a_image) # 스케일링
+
+
+    # cv2 대신 tf.image.resize 사용
+    resized_image = tf.image.resize(image_np, (IMAGE_SIZE, IMAGE_SIZE))
+    print('resized_image', type(resized_image), resized_image.shape) # <class 'tensorflow.python.framework.ops.EagerTensor'>  (224, 224, 3)
+    # EagerTensor 타입을 NumPy 배열로 다시 변환
+    a_image = np.array(resized_image)
+    # MobileNetV2 전용 스케일링
+    a_image = preprocess_input(a_image)
     batch_image = a_image.reshape(1, IMAGE_SIZE, IMAGE_SIZE, 3)
     pred_proba = model.predict(batch_image)
 
